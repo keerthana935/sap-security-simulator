@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Console — RBAC & SoD Simulator</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">SEC</span>
+      <div>
+        <div class="brand-name">Security Console</div>
+        <div class="brand-sub">RBAC · SoD Simulator</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">Dashboard</button>
+      <button class="nav-item" data-view="users">Users <span class="nav-hint">SU01</span></button>
+      <button class="nav-item" data-view="roles">Roles <span class="nav-hint">PFCG</span></button>
+      <button class="nav-item" data-view="auths">Authorizations</button>
+      <button class="nav-item" data-view="sod">SoD Rules & Violations</button>
+      <button class="nav-item" data-view="audit">Audit Log <span class="nav-hint">SM20</span></button>
+    </nav>
+    <div class="scan-status" id="scan-status">
+      <div class="scan-dot"></div>
+      <span>Scanning access model…</span>
+    </div>
+    <div class="scan-status" id="session-info" style="margin-top:8px; justify-content: space-between;">
+      <span id="session-user"></span>
+      <button id="logout-btn" class="link-btn" style="color:#f87171">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <section class="view" id="view-dashboard">
+      <header class="view-head">
+        <h1>Access Risk Overview</h1>
+        <p>Live scan of every user's effective authorizations against defined SoD rules.</p>
+      </header>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-users">–</div>
+          <div class="stat-label">Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-roles">–</div>
+          <div class="stat-label">Roles defined</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-rules">–</div>
+          <div class="stat-label">SoD rules active</div>
+        </div>
+        <div class="stat-card risk">
+          <div class="stat-num" id="stat-violations">–</div>
+          <div class="stat-label">Violations found</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Violations at a glance</h2>
+        <div id="dash-violations" class="violation-list"></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-users">
+      <header class="view-head">
+        <h1>User Administration</h1>
+        <p>Create and remove users, and assign roles — mirrors SU01 / SU10.</p>
+      </header>
+      <form class="inline-form" id="form-user">
+        <input name="username" placeholder="Username (e.g. JDOE01)" required>
+        <input name="fullName" placeholder="Full name" required>
+        <input name="department" placeholder="Department">
+        <select name="userType">
+          <option>Dialog</option>
+          <option>Service</option>
+          <option>Reference</option>
+        </select>
+        <button type="submit">+ Create user</button>
+      </form>
+      <div class="panel">
+        <table class="data-table" id="table-users"></table>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-roles">
+      <header class="view-head">
+        <h1>Role Design</h1>
+        <p>Build Single Roles (one job function) and Composite Roles (bundles) — mirrors PFCG.</p>
+      </header>
+      <form class="inline-form" id="form-role">
+        <input name="name" placeholder="Role name (e.g. Z_HR_MAINT_ROLE)" required>
+        <select name="type" id="role-type-select">
+          <option value="single">Single</option>
+          <option value="composite">Composite</option>
+        </select>
+        <input name="description" placeholder="Description">
+        <div id="role-extra-field"></div>
+        <button type="submit">+ Create role</button>
+      </form>
+      <div class="panel">
+        <table class="data-table" id="table-roles"></table>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-auths">
+      <header class="view-head">
+        <h1>Authorization Objects</h1>
+        <p>The permission building blocks that get attached to roles.</p>
+      </header>
+      <form class="inline-form" id="form-auth">
+        <input name="code" placeholder="Code (e.g. Z_HR_MAINT)" required>
+        <input name="description" placeholder="Description">
+        <button type="submit">+ Add authorization</button>
+      </form>
+      <div class="panel">
+        <table class="data-table" id="table-auths"></table>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-sod">
+      <header class="view-head">
+        <h1>Segregation of Duties</h1>
+        <p>Define conflicting authorization pairs, then scan the live access model.</p>
+      </header>
+      <form class="inline-form" id="form-sod-rule">
+        <select name="authId1" id="sod-auth-1" required></select>
+        <span class="vs">conflicts with</span>
+        <select name="authId2" id="sod-auth-2" required></select>
+        <select name="riskLevel">
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+        <input name="description" placeholder="Why this is risky">
+        <button type="submit">+ Add SoD rule</button>
+      </form>
+      <div class="panel">
+        <h2>Defined rules</h2>
+        <table class="data-table" id="table-sod-rules"></table>
+      </div>
+      <div class="panel">
+        <h2>Live violations</h2>
+        <div id="sod-violations" class="violation-list"></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-audit">
+      <header class="view-head">
+        <h1>Security Audit Log</h1>
+        <p>Every action taken across the system — mirrors SM19/SM20.</p>
+      </header>
+      <div class="panel">
+        <table class="data-table" id="table-audit"></table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
